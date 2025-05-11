@@ -411,6 +411,24 @@ $(document).ready(function () {
 
         let form = $(this);
         let formData = new FormData(this);
+        let timerInterval;
+        Swal.fire({
+        title: "Saving data...",
+        html: "Please wait... <b></b> ms remaining.",
+        timer: 10000, 
+        timerProgressBar: true,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+            const timer = Swal.getPopup().querySelector("b");
+            timerInterval = setInterval(() => {
+            timer.textContent = Swal.getTimerLeft();
+            }, 100);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+        });
 
         $.ajax({
             type: "POST",
@@ -431,36 +449,37 @@ $(document).ready(function () {
                         confirmButtonColor: '#3085d6'
                     }).then(() => {
                         form[0].reset(); // Reset form on success
-                    });
-                }
-            },
-            error: function (xhr) {
-                console.error("Validation Error:", xhr.responseJSON);
-                if (xhr.status === 422) {
-                    let errors = xhr.responseJSON.errors;
-                    let errorMessages = Object.values(errors).map(msg => msg[0]).join('\n');
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Validation Error',
-                        text: errorMessages,
-                        confirmButtonColor: '#d33'
+                        // Optionally collapse all sections or reset UI
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Server Error',
-                        text: 'Something went wrong. Please try again later.',
+                        title: 'Oops...',
+                        text: response.message || 'Something went wrong!',
                         confirmButtonColor: '#d33'
                     });
                 }
+            },
+            error: function (xhr) {
+                console.error("AJAX Error:", xhr);
+                let errors = xhr.responseJSON?.errors;
+                let errorMessage = 'Something went wrong. Please try again.';
+
+                if (errors) {
+                    errorMessage = Object.values(errors).flat().join('\n');
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: errorMessage,
+                    confirmButtonColor: '#d33'
+                });
             }
         });
     });
 });
 </script>
-
-
 
 </body>
 </html>
